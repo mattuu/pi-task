@@ -27,6 +27,8 @@ namespace PiApp.Console
             var index = 0;
             var buffer = new List<Operator>();
 
+            var calculators = new List<Calculator>();
+
             var calculator = new Calculator();
             using (var stringReader = new StringReader(expression))
             {
@@ -34,22 +36,23 @@ namespace PiApp.Console
 
                 while (tokenizer.Token != Token.EOF)
                 {
-                    if (calculator.LeftArg == null)
+                    if (!calculator.LeftArgSet)
                     {
-                        calculator.LeftArg = tokenizer;
+                        calculator.LeftArg = tokenizer.Number;
                     }
-                    else if (calculator.Operation == null)
+                    else if (!calculator.OperationSet)
                     {
-                        calculator.Operation = tokenizer;
+                        calculator.Operation = tokenizer.Token;
                     }
-                    else if (calculator.RightArg == null)
+                    else if (!calculator.RightArgSet)
                     {
-                        calculator.RightArg = tokenizer;
+                        calculator.RightArg = tokenizer.Number;
                     }
 
                     if (calculator.IsReady())
                     {
-                        calculator.Calculate();
+                        //calculator.Calculate();
+                        calculators.Add(calculator);
                         calculator = new Calculator();
                     }
 
@@ -57,6 +60,12 @@ namespace PiApp.Console
                     tokenizer.NextToken();
                 }
             }
+
+            foreach (var calc in calculators)
+            {
+                calc.Calculate();
+            }
+
         }
     }
 
@@ -74,26 +83,5 @@ namespace PiApp.Console
         public Func<decimal, decimal, decimal> Calculation { get; set; }
 
         public OperatorPrecedence Precedence { get; set; }
-    }
-
-
-    public class Calculator
-    {
-        public Tokenizer LeftArg { get; set; }
-
-        public Tokenizer RightArg { get; set; }
-
-        public Tokenizer Operation { get; set; }
-
-        public bool IsReady()
-        {
-            return LeftArg != null && RightArg != null && Operation != null;
-        }
-
-        public void Calculate()
-        {
-            var r = LeftArg.Number * RightArg.Number;
-            System.Console.WriteLine($"Calculate: {r}");
-        }
     }
 }

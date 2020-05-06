@@ -19,7 +19,7 @@ namespace PiApp.Console
 
         public Token Token { get; private set; }
 
-        public double Number { get; private set; }
+        public decimal Number { get; private set; }
 
         // Read the next character from the input strem
         // and store it in _currentChar, or load '\0' if EOF
@@ -77,7 +77,7 @@ namespace PiApp.Console
                 }
 
                 // Parse it
-                Number = double.Parse(sb.ToString(), CultureInfo.InvariantCulture);
+                Number = decimal.Parse(sb.ToString(), CultureInfo.InvariantCulture);
                 Token = Token.Number;
                 return;
             }
