@@ -21,21 +21,16 @@ namespace PiApp.Console
 
         public decimal Number { get; private set; }
 
-        // Read the next character from the input strem
-        // and store it in _currentChar, or load '\0' if EOF
         private void NextChar()
         {
             var ch = _reader.Read();
             _currentChar = ch < 0 ? '\0' : (char) ch;
         }
 
-        // Read the next token from the input stream
         public void NextToken()
         {
-            // Skip whitespace
             while (char.IsWhiteSpace(_currentChar)) NextChar();
 
-            // Special characters
             switch (_currentChar)
             {
                 case '\0':
@@ -63,10 +58,8 @@ namespace PiApp.Console
                     return;
             }
 
-            // Number?
             if (char.IsDigit(_currentChar) || _currentChar == '.')
             {
-                // Capture digits/decimal point
                 var sb = new StringBuilder();
                 var haveDecimalPoint = false;
                 while (char.IsDigit(_currentChar) || !haveDecimalPoint && _currentChar == '.')
@@ -76,7 +69,6 @@ namespace PiApp.Console
                     NextChar();
                 }
 
-                // Parse it
                 Number = decimal.Parse(sb.ToString(), CultureInfo.InvariantCulture);
                 Token = Token.Number;
                 return;

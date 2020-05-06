@@ -12,8 +12,6 @@ namespace PiApp.Console
 
             var expression = System.Console.ReadLine();
             
-
-
             parser.Parse(expression);
         }
     }

@@ -1,87 +1,68 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 
 namespace PiApp.Console
 {
     public class ExpressionParser
     {
-        public static char[] OperatorSigns = {'+', '-', '*', '/'};
-
-        private readonly Operator[] _operators;
+        private IDictionary<Token, Func<decimal, decimal, decimal>> _operations;
 
         public ExpressionParser()
         {
-            _operators = new[]
+            _operations = new Dictionary<Token, Func<decimal, decimal, decimal>>
             {
-                new Operator {Sign = '+', Precedence = OperatorPrecedence.Low, Calculation = (x, y) => x + y},
-                new Operator {Sign = '-', Precedence = OperatorPrecedence.Low, Calculation = (x, y) => x - y},
-                new Operator {Sign = '*', Precedence = OperatorPrecedence.High, Calculation = (x, y) => x * y},
-                new Operator {Sign = '/', Precedence = OperatorPrecedence.High, Calculation = (x, y) => x / y}
+                {Token.Multiply, (x, y) => x * y},
+                {Token.Divide, (x, y) => x / y},
+                {Token.Add, (x, y) => x + y},
+                {Token.Subtract, (x, y) => x - y}
             };
         }
 
         public void Parse(string expression)
         {
-            var counter = expression.Length;
-            var index = 0;
-            var buffer = new List<Operator>();
+            var tokenValues = new Collection<TokenValue>();
 
-            var calculators = new List<Calculator>();
-
-            var calculator = new Calculator();
             using (var stringReader = new StringReader(expression))
             {
                 var tokenizer = new Tokenizer(stringReader);
 
                 while (tokenizer.Token != Token.EOF)
                 {
-                    if (!calculator.LeftArgSet)
-                    {
-                        calculator.LeftArg = tokenizer.Number;
-                    }
-                    else if (!calculator.OperationSet)
-                    {
-                        calculator.Operation = tokenizer.Token;
-                    }
-                    else if (!calculator.RightArgSet)
-                    {
-                        calculator.RightArg = tokenizer.Number;
-                    }
-
-                    if (calculator.IsReady())
-                    {
-                        //calculator.Calculate();
-                        calculators.Add(calculator);
-                        calculator = new Calculator();
-                    }
-
-                    //System.Console.WriteLine($"{tokenizer.Number}, {tokenizer.Token == Token.Add}, {tokenizer.Token == Token.Subtract}");
+                    tokenValues.Add(new TokenValue(tokenizer));
                     tokenizer.NextToken();
                 }
             }
 
-            foreach (var calc in calculators)
+            var listOfSets = new List<TokenSetCalculator>();
+
+            decimal value = 0;
+            Func<decimal, decimal, decimal> op = null;
+
+            var set = new TokenSetCalculator();
+            foreach (var token in tokenValues)
             {
-                calc.Calculate();
+                set.AddToken(token);
+                if (token.Token == Token.Subtract || token.Token == Token.Add)
+                {
+                    listOfSets.Add(set);
+
+                    set = new TokenSetCalculator {OperationToken = token.Token};
+                }
             }
 
+            listOfSets.Add(set);
+
+
+            var total = 0m;
+            foreach (var tokenSet in listOfSets)
+                if (tokenSet.OperationFunc != null)
+                    total = tokenSet.OperationFunc(total, tokenSet.Calculate());
+                else
+                    total += tokenSet.Calculate();
+
+            System.Console.WriteLine($"TOTAL VALUE: {total}");
         }
-    }
-
-
-    public enum OperatorPrecedence
-    {
-        Low,
-        High
-    }
-
-    public class Operator
-    {
-        public char Sign { get; set; }
-
-        public Func<decimal, decimal, decimal> Calculation { get; set; }
-
-        public OperatorPrecedence Precedence { get; set; }
     }
 }
